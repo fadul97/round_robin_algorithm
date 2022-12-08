@@ -1,25 +1,28 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 //#define defer_and_return(value) do {result = (value); goto defer; } while(0)
-#define MAX 20
+#define MAX 7
 
 typedef enum
 {
-  OK,
-  ERROR_READ,
-  ERROR_WRITE
+    OK,
+    ERROR_READ,
+    ERROR_WRITE
 } error_list;
 
 typedef struct
 {
-  int creation_time;
-  int length;
-  int priority;
+    int creation_time;
+    int length;
+    int priority;
+    bool completed;    
 } Process;
 
 // Functions definitions
 void print_process_list(Process *vet);
 int open_and_read_file(FILE *f, Process *vet);
+void bubble_sort(Process *vet);
 
 
 // Main
@@ -34,16 +37,51 @@ int main(int argc, char **argv)
   
     print_process_list(processes);
 
-    // TODO: Sorting Algorithm
+    // Sorting Algorithm
+    bubble_sort(processes);
+    print_process_list(processes);
+
     // TODO: Implement Preemptive Scheduling
-    /*
-    for(int i = 0; i < MAX; i++)
-    {    
-        for(int j = 0; j < 3; j++)
-            if(processes[i].length > 0)
-                processes[i].length--;
+    int completed = 0;
+    int quantum = 3;
+    int count = 0;
+    int end_time = 0;
+    int start_time = 0;
+    while(completed < MAX)
+    {
+        start_time = end_time;
+        if(processes[count].completed == false)
+        {
+            for(int i = 0; i < quantum; i++)
+            {
+                if(processes[count].length > 0)
+                    processes[count].length--;
+                if(processes[count].length <= 0)
+                {
+                    processes[count].completed = true;
+                    break;
+                }
+
+                end_time++;    
+            }
+        }
+        printf("%d-%d: processo %d\n", start_time, end_time, count);
+
+        if(processes[count].length <= 0)
+        {
+            printf("Processo concluido: %d\n", count);
+            completed++;
+            processes[count].completed = true;
+        }
+
+        if(count >= MAX)
+            count = 0;
+        else
+            count++;
     }
-    */
+
+    printf("Completed = %d\n", completed);
+    print_process_list(processes);
     
     return result;
 }
@@ -67,9 +105,28 @@ int open_and_read_file(FILE *f, Process *vet)
 
     int v;
     for(int i = 0; i < MAX; i++)
+    {
         v = fscanf(f, "%d %d %d", &vet[i].creation_time, &vet[i].length,
             &vet[i].priority);
-
+        vet[i].completed = false;
+    }
     if(f) fclose(f);
     return OK;
+}
+
+void bubble_sort(Process *vet)
+{
+    Process aux;
+    for(int i = 0; i < MAX; i++)
+    {
+        for(int j = 0; j < MAX-1; j++)
+        {
+            if(vet[j].creation_time > vet[j+1].creation_time)
+            {
+                aux = vet[j];
+                vet[j] = vet[j+1];
+                vet[j+1] = aux;
+            } 
+        }
+    }
 }

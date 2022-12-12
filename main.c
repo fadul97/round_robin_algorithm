@@ -2,7 +2,7 @@
 #include <stdbool.h>
 
 //#define defer_and_return(value) do {result = (value); goto defer; } while(0)
-#define MAX 7
+#define MAX 20
 
 typedef enum
 {
@@ -14,7 +14,7 @@ typedef enum
 typedef struct
 {
     int creation_time;
-    int length;
+    int duration;
     int priority;
     bool completed;    
 } Process;
@@ -35,52 +35,52 @@ int main(int argc, char **argv)
     result = open_and_read_file(file, processes);
     if(result != 0) return result;
   
-    print_process_list(processes);
+    //print_process_list(processes);
 
     // Sorting Algorithm
     bubble_sort(processes);
     print_process_list(processes);
 
     // TODO: Implement Preemptive Scheduling
-    int completed = 0;
+    int executed = 0;
     int quantum = 3;
     int count = 0;
     int end_time = 0;
     int start_time = 0;
-    while(completed < MAX)
+
+    while(executed < MAX)
     {
         start_time = end_time;
         if(processes[count].completed == false)
         {
             for(int i = 0; i < quantum; i++)
             {
-                if(processes[count].length > 0)
-                    processes[count].length--;
-                if(processes[count].length <= 0)
-                {
-                    processes[count].completed = true;
+                if(processes[count].duration > 0)
+                    processes[count].duration--;
+                else{
+                    //processes[count].completed = true;
                     break;
                 }
 
                 end_time++;    
             }
-        }
-        printf("%d-%d: processo %d\n", start_time, end_time, count);
+            printf("%d-%d: processo %d\n", start_time, end_time, count);
 
-        if(processes[count].length <= 0)
-        {
-            printf("Processo concluido: %d\n", count);
-            completed++;
-            processes[count].completed = true;
+            if((processes[count].duration<=0)&&(processes[count].completed==false))
+            {
+                printf("Processo concluido: %d\n", count);
+                executed++;
+                processes[count].completed = true;
+            }
         }
-
-        if(count >= MAX)
+        
+        if(count >= MAX-1)
             count = 0;
         else
             count++;
     }
 
-    printf("Completed = %d\n", completed);
+    printf("Completed = %d\n", executed);
     print_process_list(processes);
     
     return result;
@@ -90,9 +90,9 @@ int main(int argc, char **argv)
 void print_process_list(Process *vet)
 {
     printf("========== LIST OF PROCESSES ==========\n");
-    printf("Creation Time    Length  Priority\n");
+    printf("Creation Time    duration  Priority\n");
     for(int i = 0; i < MAX; i++)
-        printf("      %2d           %2d       %2d\n", vet[i].creation_time, vet[i].length,
+        printf("      %2d           %2d       %2d\n", vet[i].creation_time, vet[i].duration,
             vet[i].priority);
 }
 
@@ -106,7 +106,7 @@ int open_and_read_file(FILE *f, Process *vet)
     int v;
     for(int i = 0; i < MAX; i++)
     {
-        v = fscanf(f, "%d %d %d", &vet[i].creation_time, &vet[i].length,
+        v = fscanf(f, "%d %d %d", &vet[i].creation_time, &vet[i].duration,
             &vet[i].priority);
         vet[i].completed = false;
     }
